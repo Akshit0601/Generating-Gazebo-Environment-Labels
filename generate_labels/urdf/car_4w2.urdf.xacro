@@ -1,0 +1,258 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="traffic_vehicle" >
+
+    <xacro:include filename="$(find generate_labels)/urdf/inertial_macros.xacro"/>
+    <xacro:arg name="robot_namespace" default=""/>
+    <xacro:arg name="bit1" default="0xffff"/>
+
+
+    <material name="white">
+        <color rgba="1 1 1 1" />
+    </material>
+
+    <material name="orange">
+        <color rgba="1 0.3 0.1 1"/>
+    </material>
+
+    <material name="blue">
+        <color rgba="0.2 0.2 1 1"/>
+    </material>
+
+    <material name="black">
+        <color rgba="0 0 0 1"/>
+    </material>
+
+    <!-- BASE LINK -->
+
+    <link name="$(arg robot_namespace)/base_link">
+
+    </link>
+
+
+    <!-- CHASSIS LINK -->
+
+    <joint name="$(arg robot_namespace)/chassis_joint" type="fixed">
+        <parent link="$(arg robot_namespace)/base_link"/>
+        <child link="$(arg robot_namespace)/chassis"/>
+        <origin xyz="-0.1 0 0"/>
+    </joint>
+
+    <link name="$(arg robot_namespace)/chassis">
+        <visual>
+            <origin xyz="1.9 0.0 0.30"/>
+            <geometry>
+                <box size="3.8 1.4 0.60"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+        <collision>
+            <origin xyz="1.9 0.0 0.30"/>
+            <geometry>
+                <box size="3.8 1.4 0.60"/>
+            </geometry>
+        </collision>
+        <!-- <collision>
+            <origin xyz="2.0 0.0 0.30" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <box size="2.0 0.0 0.60"/>
+            </geometry>
+        </collision> -->
+        <xacro:inertial_box mass="1.3729096e+00" x="2.0" y="1.4" z="0.15">
+            <origin xyz="1.9 0 0.075" rpy="0 0 0"/>
+        </xacro:inertial_box>
+    </link>
+    
+    <!-- LEFT WHEEL LINK -->
+
+    <joint name="$(arg robot_namespace)/left_wheel_joint" type="continuous">
+        <parent link="$(arg robot_namespace)/base_link"/>
+        <child link="$(arg robot_namespace)/left_wheel"/>
+        <origin xyz="0 0.825 0" rpy="-${pi/2} 0 0" />
+        <axis xyz="0 0 1"/>
+    </joint>
+
+    <link name="$(arg robot_namespace)/left_wheel">
+        <visual>
+            <geometry>
+                <cylinder radius="0.155" length="0.2"/>
+            </geometry>
+            <material name="blue"/>
+        </visual>
+        <collision>
+            <geometry>
+                <cylinder radius="0.155" length="0.2"/>
+            </geometry>
+        </collision>
+        <xacro:inertial_cylinder mass="2.8498940e-02" length="0.2" radius="0.155">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_cylinder>
+    </link>
+
+    <!-- RIGHT WHEEL LINK -->
+
+    <joint name="$(arg robot_namespace)/right_wheel_joint" type="continuous">
+        <parent link="$(arg robot_namespace)/base_link"/>
+        <child link="$(arg robot_namespace)/right_wheel"/>
+        <origin xyz="0 -0.825 0" rpy="${pi/2} 0 0" />
+        <axis xyz="0 0 -1"/>
+    </joint>
+
+    <link name="$(arg robot_namespace)/right_wheel">
+        <visual>
+            <geometry>
+                <cylinder radius="0.155" length="0.2"/>
+            </geometry>
+            <material name="blue"/>
+        </visual>
+        <collision>
+            <geometry>
+                <cylinder radius="0.155" length="0.2"/>
+            </geometry>
+        </collision>
+        <xacro:inertial_cylinder mass="0.1" length="0.2" radius="0.155">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_cylinder>
+    </link>
+
+    <!-- CASTER WHEEL LINK -->
+
+    <joint name="$(arg robot_namespace)/caster_wheel_joint" type="fixed">
+        <parent link="$(arg robot_namespace)/chassis"/>
+        <child link="$(arg robot_namespace)/caster_wheel"/>
+        <origin xyz="3.0 0 0"/>
+    </joint>
+
+
+    <link name="$(arg robot_namespace)/caster_wheel">
+        <visual>
+            <geometry>
+                <sphere radius="0.15"/>
+            </geometry>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <sphere radius="0.15"/>
+            </geometry>
+        </collision>
+        <xacro:inertial_sphere mass="0.1" radius="0.15">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_sphere>
+    </link>
+
+    <gazebo reference="$(arg robot_namespace)/chassis">
+        <material>Gazebo/Green</material>
+        <collision>
+            <surface>
+                <contact>
+                    <collide_bitmask>$(arg bit1)</collide_bitmask>
+                </contact>
+            </surface>
+        </collision>
+        
+    </gazebo>
+
+    <gazebo reference="$(arg robot_namespace)/caster_wheel">
+        <!-- <collide_bitmask>0x01</collide_bitmask> -->
+        <mu1>0.1</mu1>
+        <mu2>0.1</mu2>
+        <kp>1000000.0</kp>
+        <kd>100.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>1.0</maxVel>
+        <collision>
+            <surface>
+                <contact>
+                    <collide_bitmask>$(arg bit1)</collide_bitmask>
+                </contact>
+            </surface>
+        </collision>
+        <material>Gazebo/FlatBlack</material>
+    </gazebo>
+
+
+    <gazebo reference="$(arg robot_namespace)/right_wheel">
+        <!-- <collide_bitmask>0x4C</collide_bitmask> -->
+        <mu1>500</mu1>
+        <mu2>500</mu2>
+        <kp>500000.0</kp>
+        <kd>10.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>0.1</maxVel>
+        <fdir1>1 0 0</fdir1>
+        <collision>
+            <surface>
+                <contact>
+                    <collide_bitmask>$(arg bit1)</collide_bitmask>
+                </contact>
+            </surface>
+        </collision>
+        <material>Gazebo/FlatBlack</material>
+    </gazebo>
+
+    <gazebo reference="$(arg robot_namespace)/left_wheel">
+        <!-- <collide_bitmask>0x1B</collide_bitmask> -->
+        <mu1>500</mu1>
+        <mu2>500</mu2>
+        <kp>500000.0</kp>
+        <kd>10.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>0.1</maxVel>
+        <fdir1>1 0 0</fdir1>
+        <collision>
+            <surface>
+                <contact>
+                    <collide_bitmask>$(arg bit1)</collide_bitmask>
+                </contact>
+            </surface>
+        </collision>
+        <material>Gazebo/FlatBlack</material>
+    </gazebo>
+
+    <gazebo>
+        <plugin name="wheel_drive_controller" filename="libgazebo_ros_diff_drive.so">
+            <!-- wheels -->
+            <!-- <num_wheel_pairs>2</num_wheel_pairs> -->
+            <left_joint>$(arg robot_namespace)/left_wheel_joint</left_joint>
+            <!-- <left_joint>$(arg robot_namespace)/base_link_left_wheel_backside</left_joint> -->
+            <right_joint>$(arg robot_namespace)/right_wheel_joint</right_joint>
+            <!-- <right_joint>$(arg robot_namespace)/base_link_right_wheel_backside</right_joint> -->
+
+            <!-- kinematics -->
+            <wheel_separation>1.65</wheel_separation>
+            <wheel_diameter>0.31</wheel_diameter>
+
+
+
+            <!-- Limits -->
+            <max_wheel_torque>20.0</max_wheel_torque>
+            
+            <max_wheel_acceleration>22.0</max_wheel_acceleration>
+            <odometry_source>1</odometry_source>
+
+
+
+
+            <!-- Output -->
+            <odometry_frame>$(arg robot_namespace)/odom</odometry_frame>
+            <robot_base_frame>$(arg robot_namespace)/base_link</robot_base_frame>
+
+            <!-- topic & re remappings -->
+            <ros>
+                <remapping>/cmd_vel:=$(arg robot_namespace)/cmd_vel</remapping>
+                <remapping>/odom:=$(arg robot_namespace)/odom</remapping>
+                <namespace>$(arg robot_namespace)</namespace>
+            </ros>
+         
+            <publish_odom>true</publish_odom>
+            <publish_odom_tf>true</publish_odom_tf>
+            <!-- <publishWheelJointState>true</publishWheelJointState> -->
+            <publish_wheel_tf>true</publish_wheel_tf>
+
+            <update_rate>30.0</update_rate>
+        </plugin>
+    </gazebo>
+
+    
+    
+</robot>
