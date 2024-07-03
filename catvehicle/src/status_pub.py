@@ -13,6 +13,8 @@ import numpy as np
 from rclpy.callback_groups import ReentrantCallbackGroup,MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from tf_transformations import euler_from_quaternion
+from rclpy.qos import HistoryPolicy,QoSProfile
+
 
 class spawn_despawn(Node):
 
@@ -29,7 +31,11 @@ class spawn_despawn(Node):
         self.exit_counter = 0
 
         self.individual_idx_counter = dict()  #index counter for each vehicle, since they can be spawned at different timestamps
-       
+
+        self.qos_profile = QoSProfile(
+            history = HistoryPolicy.KEEP_ALL,
+            depth = 1
+        )
         
         #most time-consuming, will be performed once initially
         self.preprocessing()
@@ -50,7 +56,7 @@ class spawn_despawn(Node):
         self.time_threshold = 0
 
         self.c_grp = ReentrantCallbackGroup()
-        # self.c_grp2 = MutuallyExclusiveCallbackGroup()
+        self.c_grp2 = MutuallyExclusiveCallbackGroup()
 
 
 
@@ -59,9 +65,9 @@ class spawn_despawn(Node):
     
 
         #pub-suba
-        self.odom_listener = self.create_subscription(Odometry,"/catvehicle/odom",self.odom_callback,10,callback_group=self.c_grp)
+        self.odom_listener = self.create_subscription(Odometry,"/catvehicle/odom",self.odom_callback,1,callback_group=self.c_grp)
         self.status_publisher = self.create_publisher(Int64MultiArray,"/status",10,callback_group=self.c_grp)
-        self.status_timer = self.create_timer(0.1,self.process,callback_group=self.default_callback_group)
+        self.status_timer = self.create_timer(0.1,self.process,callback_group=self.c_grp2)
         self.msg = Int64MultiArray()
 
         self.server = self.create_service(SetBool,'/init',self.server_callback)
@@ -78,7 +84,7 @@ class spawn_despawn(Node):
         self.control_loop_init = False
 
         self.list_updated = False
-
+        
 
 
 
@@ -156,6 +162,8 @@ class spawn_despawn(Node):
         w = odom_data.pose.pose.orientation.w
 
         self.phi = euler_from_quaternion([x,y,z,w])[2]
+        self.get_logger().info(f"inside callback {self.x}")
+
         # self.get_logger().info(str(self.phi))
 
     def server_callback(self,request:SetBool.Request,response:SetBool.Response):
@@ -189,7 +197,8 @@ class spawn_despawn(Node):
             keys_to_be_deleted = list()
 
             
-            
+            self.get_logger().info(f"{self.x}")
+
             if (linear_truth):
                 self.linear_transform[0] = self.x
                 self.linear_transform[1] = self.y
@@ -200,7 +209,7 @@ class spawn_despawn(Node):
                 self.angular_transform[1][1] = cos(self.phi)
 
             if (linear_truth or angular_truth):
-                self.get_logger().info("vector state map updated")
+                # self.get_logger().info("vector state map updated")
 
                 for i in self.vector_map:
                     idx = self.individual_idx_counter[i].item()
@@ -295,8 +304,8 @@ class spawn_despawn(Node):
             self.msg.data = d
             
             self.status_publisher.publish(self.msg)
-            self.get_logger().info("publishing status list")
-            self.get_logger().info(str(self.exit_counter))
+            # self.get_logger().info("publishing status list")
+            # self.get_logger().info(str(self.exit_counter))
 
             self.time_int+=1
 
@@ -306,12 +315,12 @@ def main(args = None):
     
     status_node = spawn_despawn()
 
-    # executor = MultiThreadedExecutor(num_threads=3)
-    # executor.add_node(status_node)
+    executor = MultiThreadedExecutor()
+    executor.add_node(status_node)
 
-    # executor.spin()
+    executor.spin()
     # executor.shutdown()
-    rclpy.spin(status_node)
+    # rclpy.spin(status_node)
 
     status_node.destroy_node()
     rclpy.shutdown()

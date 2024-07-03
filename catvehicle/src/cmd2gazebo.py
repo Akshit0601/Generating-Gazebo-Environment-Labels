@@ -35,6 +35,8 @@ class Cmd_convertor(Node):
         self.pub_steer = self.create_publisher(Float64MultiArray,'/forward_position_controller/commands',10)
         self.pub_vel = self.create_publisher(Float64MultiArray,'/velocity_controller/commands',10)
         self.odom = self.create_publisher(Odometry,'/catvehicle/odom',10)
+
+        self.odom_loop = self.create_timer(0.3,self.timer_loop)
         
         self.odom_msg = Odometry()
 
@@ -50,6 +52,8 @@ class Cmd_convertor(Node):
         rMax = self.L/math.tan(self.maxsteerInside)
         rIdeal = rMax+(self.T/2.0)
         self.maxsteer=math.atan2(self.L,rIdeal)
+
+        self.cnt = 0
 
 
     def cmd_callback(self,data:Twist):
@@ -103,6 +107,8 @@ class Cmd_convertor(Node):
     def state_callback(self,data: LinkStates):
         pf = data.pose[1]  #index 1 for catvehicle
         tf = data.twist[1]
+        # self.get_logger().info(f"{pf.position.x}")
+
         self.odom_msg.pose.pose.position.x = pf.position.x
         self.odom_msg.pose.pose.position.y = pf.position.y
         self.odom_msg.pose.pose.position.z = pf.position.z
@@ -116,9 +122,10 @@ class Cmd_convertor(Node):
         self.odom_msg.twist.twist.angular.x = 0.0
         self.odom_msg.twist.twist.angular.y = 0.0
         self.odom_msg.twist.twist.angular.z = tf.angular.z
-        self.odom.publish(self.odom_msg)
-        pass
+
         
+    def timer_loop(self):
+        self.odom.publish(self.odom_msg)
 
 
 def main(args = None):
