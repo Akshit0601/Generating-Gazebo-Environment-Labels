@@ -667,7 +667,7 @@
             <!-- <state_interface name="velocity"/>
             <state_interface name="effort"/> -->
         </joint>
-        <joint name = 'back_left_wheel_joint'>
+        <joint name = 'front_left_wheel_joint'>
             <command_interface name = "velocity">
             <param name="min">-1000</param>
             <param name="max">1000</param>
@@ -676,7 +676,7 @@
             <state_interface name="velocity"/>
             <state_interface name="effort"/>
         </joint>
-        <joint name = 'back_right_wheel_joint'>
+        <joint name = 'front_right_wheel_joint'>
             <command_interface name = "velocity">
             <param name="min">-1000</param>
             <param name="max">1000</param>

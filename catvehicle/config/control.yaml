@@ -22,5 +22,5 @@ forward_position_controller:
 velocity_controller:
   ros__parameters:
     joints:
-      - back_left_wheel_joint
-      - back_right_wheel_joint
+      - front_left_wheel_joint
+      - front_right_wheel_joint

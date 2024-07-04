@@ -52,7 +52,7 @@ def generate_launch_description():
     
 
     # Path to the Xacro file
-    xacro_path = '/home/akshit/catvehicle_ros2/src/catvehicle/urdf/catvehicle.urdf.xacro'
+    xacro_path = '/home/akshit/colcon_ws/src/catvehicle/urdf/catvehicle.urdf.xacro'
         # position_x = 0.0
         # position_y = 0.0
     # data = pandas.read_csv('/home/akshit/generate_labels/src/generate_labels/data/vehicle_tracks_000_mod_1.csv')
@@ -84,9 +84,9 @@ def generate_launch_description():
             '-topic', "/robot_description",
             '-entity', "catvehicle",
             '-z', "0.0",
-            '-x', '0.0',
-            '-y', '0.0',
-            '-Y', '0.0',
+            '-x', '5.0',
+            '-y', '-15.0',
+            '-Y', '1.57',
         ]
     )
     joint_state_publisher_node = Node(
