@@ -162,7 +162,7 @@ class spawn_despawn(Node):
         w = odom_data.pose.pose.orientation.w
 
         self.phi = euler_from_quaternion([x,y,z,w])[2]
-        self.get_logger().info(f"inside callback {self.x}")
+        # self.get_logger().info(f"inside callback {self.x}")
 
         # self.get_logger().info(str(self.phi))
 
@@ -171,6 +171,100 @@ class spawn_despawn(Node):
         response.success = True
         response.message = "control loop initiated"
         return response
+    
+    # def process(self):
+
+    #     # linear_transform = torch.tensor([self.x,self.y])
+    #     # angular_tranform = torch.tensor([[cos(self.phi),-1*sin(self.phi)],
+    #     #                                     [sin(self.phi), cos(self.phi)]])
+
+    #     #time thresholds
+    #     if self.control_loop_init: 
+
+            
+    #         self.time_threshold = self.time_int*100
+
+    #         self.greater_threshold[2] = self.time_threshold
+    #         keys_to_be_deleted = list()
+  
+            
+
+    #         '''
+    #         check whether ego vehicle has been updated or not, if yes then the transformation matrices are 
+    #         updated and coordinates are transformed over cuda/cpu of each vehicle.
+    #         Done to avoid computing transformation over each iteration even if there is no change in odometry
+    #         '''
+    #         # linear_truth = self.linear_transform[0] != self.x or self.linear_transform[1] != self.y
+    #         # angular_truth = self.angular_transform[0][0] != cos(self.phi) or self.angular_transform[0][1] != -1*sin(self.phi) or self.angular_transform[1][0] != sin(self.phi) or self.angular_transform[1][1] != cos(self.phi) 
+    #         for i in self.vector_map:
+    #             linear_truth = round((self.linear_transform[0].item() - self.x),2) != 0.0 or round((self.linear_transform[1].item() - self.y),2) != 0 
+    #             angular_truth = round((self.angular_transform[0][0].item() - cos(self.phi)),2) != 0.0 or round((self.angular_transform[0][1].item() - (-1)*sin(self.phi)),2) != 0.0 or round((self.angular_transform[1][0].item() - sin(self.phi)),2) != 0.0 or round((self.angular_transform[1][1].item() - cos(self.phi)),2) != 0.0
+    #             print(angular_truth,linear_truth)
+                
+
+    #             if (linear_truth):
+    #                 self.linear_transform[0] = self.x
+    #                 self.linear_transform[1] = self.y
+    #             if (angular_truth):
+    #                 self.angular_transform[0][0] = cos(self.phi)
+    #                 self.angular_transform[0][1] = -1*sin(self.phi)
+    #                 self.angular_transform[1][0] = sin(self.phi)
+    #                 self.angular_transform[1][1] = cos(self.phi)
+                    
+
+
+    #             if (linear_truth or angular_truth):
+    #                 self.result_map[i] = self.vector_map[i] - self.linear_transform
+    #                 self.result_map[i] = torch.bmm(self.vector_map[i].unsqueeze(0),self.angular_transform.unsqueeze(0)).squeeze() 
+    #                 self.get_logger().info(f"{self.x}")
+
+    #             # self.get_logger().info("vector state map updated")
+
+    #             idx = self.individual_idx_counter[i].item()
+
+    #                 ## transformation of vector map
+                   
+    #                 ## check if the traffic vehicle is within fov and has been spawned yet, based on current timestamp shown by self.timeint
+                    
+    #             try:
+    #                 truth_tensor = self.result_map[i][idx].less_equal(self.greater_threshold)
+    #                 greater_truth = False if False in truth_tensor else True
+    #                 less_truth = False if False in self.result_map[i][idx].greater_equal(self.lesser_threshold) else True
+    #                 if self.result_map[i][idx][2].equal(self.greater_threshold[2]):
+    #                     self.individual_idx_counter[i]+=1   #only increment in index if they have been spawned
+
+    #                 self.pub_list[i] = int(greater_truth and less_truth)
+                    
+
+    #             except IndexError:
+    #                 # self.get_logger().info(str(e.__class__.__name__))
+    #                 self.pub_list[i] = 0
+    #                 keys_to_be_deleted.append(i)
+    #                 self.exit_counter+=1
+                
+                        
+    #         #delete entries whose data is not available after this iteration
+            
+    #         for key in keys_to_be_deleted:
+    #             del self.vector_map[key] 
+    #             del self.result_map[key]
+    #         #when all entries are deleted
+    #         if self.exit_counter==self.exit_threshold:   #kills the node when no more vehicle are there to analyse
+    #             self.get_logger().info("killing node now")
+    #             self.get_logger().info("length: "+str(len(self.vector_map)))
+    #             self.get_logger().info(str(self.time_int))
+    #             self.destroy_node()
+    #             rclpy.shutdown() 
+
+    #         d = np.nonzero(self.pub_list)[0].tolist()
+    #         d.append(self.time_int) ##like a checksum
+    #         self.msg.data = d
+            
+    #         self.status_publisher.publish(self.msg)
+    #         self.get_logger().info("publishing status list")
+    #         # self.get_logger().info(str(self.exit_counter))
+
+    #         self.time_int+=1
     
         
     def process(self):
@@ -194,11 +288,7 @@ class spawn_despawn(Node):
             
             linear_truth = round((self.linear_transform[0].item() - self.x),2) != 0.0 or round((self.linear_transform[1].item() - self.y),2) != 0 
             angular_truth = round((self.angular_transform[0][0].item() - cos(self.phi)),2) != 0.0 or round((self.angular_transform[0][1].item() - (-1)*sin(self.phi)),2) != 0.0 or round((self.angular_transform[1][0].item() - sin(self.phi)),2) != 0.0 or round((self.angular_transform[1][1].item() - cos(self.phi)),2) != 0.0
-            keys_to_be_deleted = list()
-
-            
-            self.get_logger().info(f"{self.x}")
-
+            keys_to_be_deleted = list()            
             if (linear_truth):
                 self.linear_transform[0] = self.x
                 self.linear_transform[1] = self.y
@@ -207,6 +297,8 @@ class spawn_despawn(Node):
                 self.angular_transform[0][1] = -1*sin(self.phi)
                 self.angular_transform[1][0] = sin(self.phi)
                 self.angular_transform[1][1] = cos(self.phi)
+            
+            self.get_logger().info(str(("1",linear_truth,angular_truth)))
 
             if (linear_truth or angular_truth):
                 # self.get_logger().info("vector state map updated")
@@ -216,14 +308,16 @@ class spawn_despawn(Node):
 
                     ## transformation of vector map
                     self.result_map[i] = self.vector_map[i] - self.linear_transform
-                    self.result_map[i] = torch.bmm(self.vector_map[i].unsqueeze(0),self.angular_transform.unsqueeze(0)).squeeze() 
+                    self.result_map[i] = torch.bmm(self.result_map[i].unsqueeze(0),self.angular_transform.unsqueeze(0)).squeeze() 
                     ## check if the traffic vehicle is within fov and has been spawned yet, based on current timestamp shown by self.timeint
                     
                     try:
                         truth_tensor = self.result_map[i][idx].less_equal(self.greater_threshold)
                         greater_truth = False if False in truth_tensor else True
                         less_truth = False if False in self.result_map[i][idx].greater_equal(self.lesser_threshold) else True
-                        
+                        if i==0:
+                            self.get_logger().info(f"{self.x}")
+                            self.get_logger().info(str(("2",greater_truth,less_truth)))
                         
                         # if truth_tensor[2] == True:
                         #     print(self.time_threshold,' for ',i,' with ',self.vector_map[i][idx][2])
@@ -258,7 +352,9 @@ class spawn_despawn(Node):
                         truth_tensor = self.result_map[i][idx].less_equal(self.greater_threshold)
                         greater_truth = False if False in truth_tensor else True
                         less_truth = False if False in self.result_map[i][idx].greater_equal(self.lesser_threshold) else True
-                        
+                        if i==0:
+                            self.get_logger().info(f"{self.result_map[0][idx]}")
+                            self.get_logger().info(str(("2",greater_truth,less_truth)))
                         # if truth_tensor[2] == True:
                         #     self.individual_idx_counter[i]+=1
                         # if int(greater_truth and less_truth):
