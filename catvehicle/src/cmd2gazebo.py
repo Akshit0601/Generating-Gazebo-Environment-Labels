@@ -36,7 +36,7 @@ class Cmd_convertor(Node):
         self.pub_vel = self.create_publisher(Float64MultiArray,'/velocity_controller/commands',10)
         self.odom = self.create_publisher(Odometry,'/catvehicle/odom',10)
 
-        self.odom_loop = self.create_timer(0.3,self.timer_loop)
+        self.odom_loop = self.create_timer(0.03,self.timer_loop)
         
         self.odom_msg = Odometry()
 
