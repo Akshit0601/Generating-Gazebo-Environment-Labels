@@ -9,7 +9,7 @@ from geometry_msgs.msg import Twist,TransformStamped
 # from tf. import euler_from_quaternion
 from tf_transformations import euler_from_quaternion
 
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64MultiArray
 import math
 import numpy as np
 import time
@@ -31,6 +31,7 @@ from sensor_msgs.msg import LaserScan
 class CarVehicle(Node):
 
     def __init__(self,robot_name,goal_x,goal_y):
+        super().__init__('catvehicle_controller')   
         self.name = robot_name
         self.velocity = Twist()
         self.odometry = Odometry()
@@ -43,8 +44,7 @@ class CarVehicle(Node):
         self.T = 1.29
         self.goal_x = goal_x
         self.goal_y = goal_y
-
-        super().__init__('catvehicle_controller')
+        
 
         self.callback_grp = ReentrantCallbackGroup()
         self.transformedPose = np.array([self.pose[0] + self.L * math.cos(self.pose[2]),
@@ -54,17 +54,20 @@ class CarVehicle(Node):
 
         # rospy.Subscriber(f'/{self.name}/odom',Odometry,self.RobotPose)
         # self.create_subscription('/catvehicle/odom',Odometry,self.RobotPose,10,callback_group=self.callback_grp)
-        self.create_subscription(Odometry,'/catvehicle/odom',self.RobotPose,10)
+        self.create_subscription(Odometry,'/catvehicle/odom',self.RobotPose,10,callback_group=self.callback_grp)
 
         #rospy.Subscriber(f'/{self.name}/steer_angle_commanded',Float64,self.SteerAngleFeedback)
         # self.velocity_publisher = rospy.Publisher(f'/{self.name}/cmd_vel_safe', Twist, queue_size=10)
-        self.velocity_publisher = self.create_publisher(Twist,"/cmd_vel",10)
+        self.velocity_publisher = self.create_publisher(Twist,"/cmd_vel",10,callback_group=self.callback_grp)
+        # self.joint_control = self.create_publisher(Float64MultiArray,'/velocity_controller/commands',10,callback_group=self.callback_grp)
+        # self.joint_msg = Float64MultiArray()
 
-        self.control_loop = self.create_timer(100,self.controller)
+        self.control_loop = self.create_timer(0.1,self.controller,callback_group=self.default_callback_group)
 
 
         # rospy.Subscriber(f'/{self.name}/front_laser_points', LaserScan, self.lidar_callback, queue_size=10)
-        self.create_subscription(LaserScan,"/catvehicle/scan", self.lidar_callback, 10)
+        self.create_subscription(LaserScan,"/catvehicle/scan", self.lidar_callback, 10,callback_group=self.callback_grp)
+
 
         #velocity_msg = AckermannDriveStamped()
         self.velocity_msg = Twist()
@@ -106,6 +109,7 @@ class CarVehicle(Node):
     def lidar_callback(self,msg):
         #global ranges, angles
         ranges_raw = msg.ranges
+        # self.get_logger().info(f"{ranges_raw[0]}")
         self.angles = np.linspace(msg.angle_min, msg.angle_max, len(msg.ranges))
         self.ranges = np.zeros(len(ranges_raw))
         #self.min_angle = msg.angle_min
@@ -127,7 +131,7 @@ class CarVehicle(Node):
         #global angles
 
         delta = int(-(len(self.ranges)/np.pi)*self.steer_angle)
-        print(delta) # Measure of steering angle (interms of angle indices) relative to the robot's orientation
+        # print(delta) # Measure of steering angle (interms of angle indices) relative to the robot's orientation
         indices_limited_fov = [] #Angle indices of interest considered for icecone computations
 
         for i in range(int((len(self.ranges)/4)+delta/2),int(len(self.ranges)-(len(self.ranges)/4)+delta/2)):
@@ -142,6 +146,8 @@ class CarVehicle(Node):
         #print(2*(index_of_interest-mid_element))
 
         for j in indices_limited_fov:
+
+
             index_of_interest = j
             d = []
             for i in range(min(mid_element,mid_element+2*(index_of_interest-mid_element)),max(mid_element,mid_element+2*(index_of_interest-mid_element))):
@@ -150,13 +156,15 @@ class CarVehicle(Node):
                 except Exception as e:
                     pass
             # rospy.loginfo(d)
-            self.get_logger().info(str(d))
+            # self.get_logger().info(str(d))
             try:
                 d_min[j] = 0.6*min(d)
             except Exception as e:
                 pass
 
+        
         return d_min, indices_limited_fov
+        
 
     def way_point_finder(self, d_min, indices_limited_fov): #Considering a straight line road
 
@@ -164,6 +172,7 @@ class CarVehicle(Node):
 
         # Computed based on horizontal road
         for i in indices_limited_fov:
+            
 
             x_lim = self.transformedPose[0] + d_min[i]*math.cos(self.angle_normalizer(self.angles[i]+self.transformedPose[3]))
             y_lim = self.transformedPose[1] + d_min[i]*math.sin(self.angle_normalizer(self.angles[i]+self.transformedPose[3]))
@@ -238,6 +247,7 @@ class CarVehicle(Node):
         #way_x_opt, way_y_opt = self.way_point_finder(d_min,indices_limited_fov)
 
         way_x_opt, way_y_opt = self.way_point_finder_distance_based(d_min,indices_limited_fov)
+        self.get_logger().info(f'{way_x_opt},{way_y_opt}')
 
         rel_bearing = self.angle_normalizer(self.transformedPose[2] - np.arctan2(self.transformedPose[1] - way_y_opt, self.transformedPose[0] - way_x_opt))
 
@@ -266,20 +276,27 @@ class CarVehicle(Node):
 
         end_time = time.time()
         elapsed_time = end_time - start_time
-        self.steer_angle = (self.steer_angle + V[1]*elapsed_time)
+        # self.steer_angle = (self.steer_angle + V[1]*elapsed_time)
 
-        if(self.steer_angle>1.2):
-            self.steer_angle = 1.2
+        # if(self.steer_angle>1.2):
+        #     self.steer_angle = 1.2
         
-        if(self.steer_angle<-1.2):
-            self.steer_angle = -1.2
+        # if(self.steer_angle<-1.2):
+        #     self.steer_angle = -1.2
 
-        velocity = V[0]/math.cos(self.steer_angle)
+        # velocity = V[0]/math.cos(self.steer_angle)
 
-        self.velocity_msg.linear.x = velocity
-        self.velocity_msg.angular.z = self.steer_angle
+        self.velocity_msg.linear.x = V[0]
+
+        # self.velocity_msg.angular.z = self.steer_angle
+        self.velocity_msg.angular.z = V[1]
+        # front_vel = V[0] * 2.76281254
+        # front_ang_vel = V[1]
+        # print(front_ang_vel,front_vel)
+        # self.joint_msg.data =[front_vel,front_vel,front_ang_vel,front_ang_vel]
+        # self.joint_control.publish(self.joint_msg)
         self.velocity_publisher.publish(self.velocity_msg)
-        self.get_logger().info("publshing now")
+        # self.get_logger().info("publshing now")
 
         #rate.sleep()
     ########################
@@ -298,7 +315,7 @@ if __name__ == "__main__":
 
 
     # Instantiate your Car objects
-    Car_1 = CarVehicle('catvehicle',18,7)
+    Car_1 = CarVehicle('catvehicle',-15,0)
 
     executor = MultiThreadedExecutor()
     executor.add_node(Car_1)
