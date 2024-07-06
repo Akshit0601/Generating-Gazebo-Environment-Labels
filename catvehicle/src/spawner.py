@@ -98,7 +98,7 @@ def delete_vehicle(id):
 
 rclpy.init()
 c_group = ReentrantCallbackGroup()
-executor = MultiThreadedExecutor(num_threads=4)
+executor = MultiThreadedExecutor()
 nh = rclpy.create_node("spawner_despawner")
 preprocessing()
 
