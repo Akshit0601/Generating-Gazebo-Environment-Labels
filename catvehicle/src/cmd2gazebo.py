@@ -57,7 +57,8 @@ class Cmd_convertor(Node):
 
 
     def cmd_callback(self,data:Twist):
-        self.x = data.linear.x*2.6101
+        # self.x = data.linear.x*2.6101
+        self.x = data.linear.x*2.76281254
         self.z = max(-self.maxsteer,min(self.maxsteer,data.angular.z))
         self.lastMsg = Time()
         self.publish()
