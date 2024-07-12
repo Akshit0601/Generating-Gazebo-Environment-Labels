@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+import warnings 
+warnings.filterwarnings("ignore",category=DeprecationWarning)
+
 import rclpy
 import xacro
 from rclpy.node import Node
@@ -14,7 +17,9 @@ import math, statistics
 from time import time
 from collections import Counter
 # import pandas
+
 import pandas
+
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from gazebo_msgs.srv import DeleteEntity, SpawnEntity
 from std_srvs.srv import SetBool

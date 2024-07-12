@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import warnings
+warnings.filterwarnings("ignore",category=DeprecationWarning)
 import rclpy
 import rclpy.duration
 from rclpy.node import Node

@@ -1,12 +1,16 @@
 import rclpy
+try:
+    import pandas
+except Exception as e:
+    pass
+
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist,TransformStamped
-
 from tf_transformations import euler_from_quaternion
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64MultiArray
 import math
 import numpy as np
 import time
@@ -16,6 +20,7 @@ from math import sin,cos,atan
 import torch
 from scipy.spatial.distance import cdist
 from time import time
+from gazebo_msgs.msg import ModelStates
 
 class clust(Node):
 
@@ -28,9 +33,20 @@ class clust(Node):
 
         self.create_subscription(LaserScan,"/catvehicle/scan",self.lidar_processing,10)
 
+        self.create_subscription(ModelStates,"/gazebo/model_states",self.tranform_update,10)
+
+        self.create_subscription(Float64MultiArray,"/status",self.index_updater,10)
+
+
         self.arr_curr = np.array([])
         self.arr_prev = np.array([])
         self.colors = ["yellow","red",'blue','orange']
+    
+    def preprocessing(self):
+        self.states_data = pandas.read_csv("data.csv")
+        
+        
+        pass
 
 
     def lidar_processing(self,data:LaserScan):
@@ -46,6 +62,7 @@ class clust(Node):
 
         m_list = list()
         print(len(l))
+
         for i in l: 
             # print(l)
             temp_cluster = list()

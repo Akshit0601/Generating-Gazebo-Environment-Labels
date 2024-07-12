@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-
+import warnings
+warnings.filterwarnings("ignore",category=DeprecationWarning)
 import rclpy.node
 import xacro
 import rclpy
