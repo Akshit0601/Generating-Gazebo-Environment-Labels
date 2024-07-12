@@ -300,7 +300,7 @@ class spawn_despawn(Node):
                 self.angular_transform[1][0] = sin(self.phi)
                 self.angular_transform[1][1] = cos(self.phi)
             
-            self.get_logger().info(str(("1",linear_truth,angular_truth)))
+            # self.get_logger().info(str(("1",linear_truth,angular_truth)))
 
             if (linear_truth or angular_truth):
                 # self.get_logger().info("vector state map updated")
@@ -318,8 +318,8 @@ class spawn_despawn(Node):
                         greater_truth = False if False in truth_tensor else True
                         less_truth = False if False in self.result_map[i][idx].greater_equal(self.lesser_threshold) else True
                         if i==0:
-                            self.get_logger().info(f"{self.x}")
-                            self.get_logger().info(str(("2",greater_truth,less_truth)))
+                            # self.get_logger().info(f"{self.x}")
+                            # self.get_logger().info(str(("2",greater_truth,less_truth)))
                         
                         # if truth_tensor[2] == True:
                         #     print(self.time_threshold,' for ',i,' with ',self.vector_map[i][idx][2])
