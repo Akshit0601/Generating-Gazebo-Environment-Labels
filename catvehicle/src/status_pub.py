@@ -16,13 +16,16 @@ from rclpy.callback_groups import ReentrantCallbackGroup,MutuallyExclusiveCallba
 from rclpy.executors import MultiThreadedExecutor
 from tf_transformations import euler_from_quaternion
 from rclpy.qos import HistoryPolicy,QoSProfile
-
+import os
 
 class spawn_despawn(Node):
 
     def __init__(self):
         super().__init__("spawner")
-        self.data = pandas.read_csv("/home/akshit/catvehicle_ros2/src/catvehicle/src/data.csv")
+        self.declare_parameter('path', rclpy.Parameter.Type.STRING)
+        self.data_path = self.get_parameter('path').value
+        self.data = pandas.read_csv(self.data_path)
+        # self.data = pandas.read_csv("/home/akshit/catvehicle_ros2/src/catvehicle/src/data.csv")
         # self.data.rename(columns ={'Unnamed: 0': 'id'}, inplace = True)
         self.vector_map = dict()
 
@@ -317,17 +320,7 @@ class spawn_despawn(Node):
                         truth_tensor = self.result_map[i][idx].less_equal(self.greater_threshold)
                         greater_truth = False if False in truth_tensor else True
                         less_truth = False if False in self.result_map[i][idx].greater_equal(self.lesser_threshold) else True
-                        if i==0:
-                            # self.get_logger().info(f"{self.x}")
-                            # self.get_logger().info(str(("2",greater_truth,less_truth)))
-                        
-                        # if truth_tensor[2] == True:
-                        #     print(self.time_threshold,' for ',i,' with ',self.vector_map[i][idx][2])
-                        #     self.individual_idx_counter[i]+=1
-                        # if int(greater_truth and less_truth):
-                        #     print('idx for ',i," is ",idx)
-                        #     print(self.vector_map[i][idx])
-                        #     print(self.time_int)
+                    
                         if self.result_map[i][idx][2].equal(self.greater_threshold[2]):
                             self.individual_idx_counter[i]+=1   #only increment in index if they have been spawned
 
@@ -354,17 +347,7 @@ class spawn_despawn(Node):
                         truth_tensor = self.result_map[i][idx].less_equal(self.greater_threshold)
                         greater_truth = False if False in truth_tensor else True
                         less_truth = False if False in self.result_map[i][idx].greater_equal(self.lesser_threshold) else True
-                        if i==0:
-                            self.get_logger().info(f"{self.result_map[0][idx]}")
-                            self.get_logger().info(str(("2",greater_truth,less_truth)))
-                        # if truth_tensor[2] == True:
-                        #     self.individual_idx_counter[i]+=1
-                        # if int(greater_truth and less_truth):
-                        #     print()
-                        # if int(greater_truth and less_truth):
-                        #     print('idx for ',i," is ",idx)
-                        #     print(self.vector_map[i][idx])
-                        #     print(self.time_int)
+                        
                         if self.result_map[i][idx][2].equal(self.greater_threshold[2]):
                             self.individual_idx_counter[i]+=1
                             

@@ -32,7 +32,10 @@ class MyVehicleController(Node):
         super().__init__('vehicle_controller')
 
         self.time_int = 0
-        self.data = pandas.read_csv("/home/akshit/catvehicle_ros2/src/catvehicle/src/data.csv")
+        self.declare_parameter('path', rclpy.Parameter.Type.STRING)
+        self.data_path = self.get_parameter('path').value
+        self.data = pandas.read_csv(self.data_path)
+        # self.data = pandas.read_csv("/home/akshit/catvehicle_ros2/src/catvehicle/src/data.csv")
         # self.data.rename(columns ={'Unnamed: 0': 'id'}, inplace = True)
 
         

@@ -1,8 +1,8 @@
 import rclpy
-try:
-    import pandas
-except Exception as e:
-    pass
+import warnings
+warnings.filterwarnings("ignore",category=DeprecationWarning)
+import pandas
+
 
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
@@ -30,6 +30,8 @@ class clust(Node):
 
         self.lenth_threshold = 0.5
         self.m = 0
+        self.states_data = pandas.read_csv("data.csv")
+
 
         self.create_subscription(LaserScan,"/catvehicle/scan",self.lidar_processing,10)
 
@@ -41,9 +43,13 @@ class clust(Node):
         self.arr_curr = np.array([])
         self.arr_prev = np.array([])
         self.colors = ["yellow","red",'blue','orange']
+        self.vel_states = dict()
     
     def preprocessing(self):
-        self.states_data = pandas.read_csv("data.csv")
+        
+        for iter,row in self.states_data.iterrows():
+            self.vel_states[int(row.id)] = np.array([row.velocity, row.psi_rad])
+            
         
         
         pass

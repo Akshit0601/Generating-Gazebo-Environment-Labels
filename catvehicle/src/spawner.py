@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import warnings
+
+import rclpy.parameter
 warnings.filterwarnings("ignore",category=DeprecationWarning)
 import rclpy.node
 import xacro
@@ -9,7 +11,6 @@ from gazebo_msgs.srv import SpawnEntity,DeleteEntity
 import pandas
 from std_msgs.msg import Int64MultiArray
 from random import randint
-df = pandas.read_csv("/home/akshit/catvehicle_ros2/src/catvehicle/src/data.csv")
 from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 spawned_veh = list()
@@ -18,9 +19,10 @@ xml_map = dict()
 vector_map = dict()
 
 def preprocessing():
-    global df,xml_map,vector_map,nh
+    global df,xml_map,vector_map,nh,xacro_path
     for i in df.id.unique():
-        doc = xacro.parse(open("/home/akshit/generate_labels/src/generate_labels/urdf/car_4w2.urdf.xacro"))
+        
+        doc = xacro.parse(open(xacro_path))
 
         namespace = "vehicle"+str(i)
         xacro.process_doc(doc,{'robot_namespace' : namespace, 'bit1': hex(2**randint(1,15))})
@@ -101,6 +103,12 @@ rclpy.init()
 c_group = ReentrantCallbackGroup()
 executor = MultiThreadedExecutor()
 nh = rclpy.create_node("spawner_despawner")
+nh.declare_parameter('path',rclpy.Parameter.Type.STRING)
+nh.declare_parameter('xacro_path',rclpy.Parameter.Type.STRING)
+df = pandas.read_csv(nh.get_parameter('path').value)
+# df = pandas.read_csv("/home/akshit/catvehicle_ros2/src/catvehicle/src/data.csv")
+xacro_path = nh.get_parameter('xacro_path').value
+nh.get_logger().info(xacro_path)
 preprocessing()
 
 spawn_client = nh.create_client(SpawnEntity,"/spawn_entity",callback_group=c_group) 
