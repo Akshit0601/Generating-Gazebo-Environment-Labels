@@ -6,7 +6,7 @@ ros2 launch catvehicle gazebo.launch.py
 Wait for Gazebo to launch, and the catvehicle is spawned
 
 ```
- ros2 launch catvehicle nodes.launch.py 'path:=<insert csv path here>'
+ ros2 launch catvehicle nodes.launch.py path:=<insert csv path here>
 ```
 Wait until theres two logs of "Preprocessing Done" as:
 
@@ -18,5 +18,5 @@ Wait until theres two logs of "Preprocessing Done" as:
 Finally...
 
 ```
-ros2 run catvehicle --ros-args -p 'path:=<insert csv path here, should be same as above>'
+ros2 run catvehicle control.py --ros-args -p path:=<insert csv path here, should be same as above>
 ```
